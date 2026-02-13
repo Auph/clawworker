@@ -195,8 +195,11 @@
       </div>
 
       <p class="error" id="error"></p>
-
-      <p class="info">Cold start usually takes 1–2 minutes</p>
+      <p class="info" id="info">Cold start usually takes 1–2 minutes</p>
+      <p class="stuck-hint" id="stuckHint" style="display:none; margin-top:1rem; font-size:0.85rem;">
+        Taking longer than expected? <a href="#" id="retryLink" style="color:#06b6d4;">Refresh page</a> or
+        <a href="/_admin/" style="color:#06b6d4;">Admin UI</a> to restart the gateway.
+      </p>
     </div>
 
     <script>
@@ -207,10 +210,16 @@
       const stepContainer = document.getElementById('step-container');
       const stepGateway = document.getElementById('step-gateway');
       const stepReady = document.getElementById('step-ready');
+      const infoEl = document.getElementById('info');
+      const stuckHint = document.getElementById('stuckHint');
+      const retryLink = document.getElementById('retryLink');
 
       let pollCount = 0;
       let consecutiveErrors = 0;
       const maxConsecutiveErrors = 5;
+      const pollIntervalMs = 2000;
+      const stuckHintAfterPolls = 60;  // ~2 min
+      const retryBtnAfterPolls = 90;   // ~3 min
 
       function setProgress(step) {
         [stepContainer, stepGateway, stepReady].forEach((el, i) => {
@@ -244,6 +253,12 @@
           if (data.status === 'not_running') {
             statusEl.textContent = 'Spinning up container...';
             setProgress(0);
+            if (pollCount >= retryBtnAfterPolls) {
+              stuckHint.style.display = 'block';
+              infoEl.style.display = 'none';
+            } else if (pollCount >= stuckHintAfterPolls) {
+              infoEl.textContent = 'Still starting… cold start can take 3–5 min.';
+            }
           } else if (data.status === 'not_responding') {
             statusEl.textContent = 'Container up, starting gateway...';
             setProgress(1);
@@ -252,7 +267,7 @@
             setProgress(1);
           }
 
-          setTimeout(checkStatus, 2000);
+          setTimeout(checkStatus, pollIntervalMs);
         } catch (err) {
           consecutiveErrors++;
 
@@ -268,6 +283,7 @@
         }
       }
 
+      retryLink.addEventListener('click', (e) => { e.preventDefault(); location.reload(); });
       setTimeout(checkStatus, 1000);
     </script>
   </body>

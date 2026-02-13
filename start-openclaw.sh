@@ -275,6 +275,9 @@ if r2_configured; then
         MARKER=/tmp/.last-sync-marker
         LOGFILE=/tmp/r2-sync.log
         touch "$MARKER"
+        rclone_sync_with_retry() {
+            rclone sync "$@" $RCLONE_FLAGS 2>> "$LOGFILE" || { sleep 5; rclone sync "$@" $RCLONE_FLAGS 2>> "$LOGFILE"; }
+        }
 
         while true; do
             sleep 30
@@ -292,15 +295,12 @@ if r2_configured; then
 
             if [ "$COUNT" -gt 0 ]; then
                 echo "[sync] Uploading changes ($COUNT files) at $(date)" >> "$LOGFILE"
-                rclone sync "$CONFIG_DIR/" "r2:${R2_BUCKET}/openclaw/" \
-                    $RCLONE_FLAGS --exclude='*.lock' --exclude='*.log' --exclude='*.tmp' --exclude='.git/**' 2>> "$LOGFILE"
+                rclone_sync_with_retry "$CONFIG_DIR/" "r2:${R2_BUCKET}/openclaw/" --exclude='*.lock' --exclude='*.log' --exclude='*.tmp' --exclude='.git/**'
                 if [ -d "$WORKSPACE_DIR" ]; then
-                    rclone sync "$WORKSPACE_DIR/" "r2:${R2_BUCKET}/workspace/" \
-                        $RCLONE_FLAGS --exclude='skills/**' --exclude='.git/**' --exclude='node_modules/**' 2>> "$LOGFILE"
+                    rclone_sync_with_retry "$WORKSPACE_DIR/" "r2:${R2_BUCKET}/workspace/" --exclude='skills/**' --exclude='.git/**' --exclude='node_modules/**'
                 fi
                 if [ -d "$SKILLS_DIR" ]; then
-                    rclone sync "$SKILLS_DIR/" "r2:${R2_BUCKET}/skills/" \
-                        $RCLONE_FLAGS 2>> "$LOGFILE"
+                    rclone_sync_with_retry "$SKILLS_DIR/" "r2:${R2_BUCKET}/skills/"
                 fi
                 date -Iseconds > "$LAST_SYNC_FILE"
                 touch "$MARKER"

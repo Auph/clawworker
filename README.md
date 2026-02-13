@@ -514,11 +514,15 @@ OpenClaw in Cloudflare Sandbox uses multiple authentication layers:
 
 **Gateway fails to start:** Check `npx wrangler secret list` and `npx wrangler tail`
 
+**`listProcesses` 500 / "container is not running":** The Sandbox container has stopped (idle, crash, or tear-down). Refresh the page or visit `/_admin/` to trigger a new request—this starts the container again. If it recurs, try redeploying.
+
 **Config changes not working:** Edit the `# Build cache bust:` comment in `Dockerfile` and redeploy
 
 **Slow first request:** Cold starts take 1-2 minutes. Subsequent requests are faster.
 
 **R2 not mounting:** Check that all three R2 secrets are set (`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `CF_ACCOUNT_ID`). Note: R2 mounting only works in production, not with `wrangler dev`.
+
+**R2 "directory not found" / intermittent failures:** Can occur when the container's network path to R2 is flaky (sleep/wake, region routing). Test R2 and background sync now retry on failure. If it persists, refresh the page to wake the container, or redeploy.
 
 **Access denied on admin routes:** Ensure `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD` are set, and that your Cloudflare Access application is configured correctly.
 
