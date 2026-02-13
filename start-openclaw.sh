@@ -101,6 +101,23 @@ else
 fi
 
 # ============================================================
+# VERSION OVERRIDE (admin can set desired version via API; synced to R2)
+# ============================================================
+VERSION_OVERRIDE_FILE="$CONFIG_DIR/clawworker-version-override"
+if [ -f "$VERSION_OVERRIDE_FILE" ]; then
+    DESIRED_VERSION=$(head -1 "$VERSION_OVERRIDE_FILE" | tr -d '[:space:]')
+    if [ -n "$DESIRED_VERSION" ]; then
+        # openclaw --version outputs e.g. "openclaw 2026.2.3" or "2026.2.3"
+        CURRENT_VERSION=$(openclaw --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1 || echo "")
+        if [ -n "$CURRENT_VERSION" ] && [ "$CURRENT_VERSION" != "$DESIRED_VERSION" ]; then
+            echo "Updating OpenClaw from $CURRENT_VERSION to $DESIRED_VERSION..."
+            npm install -g "openclaw@${DESIRED_VERSION}" 2>&1 || echo "WARNING: npm install failed"
+            echo "OpenClaw updated to $(openclaw --version 2>/dev/null | head -1)"
+        fi
+    fi
+fi
+
+# ============================================================
 # ONBOARD (only if no config exists yet)
 # ============================================================
 if [ ! -f "$CONFIG_FILE" ]; then

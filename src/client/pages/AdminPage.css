@@ -482,6 +482,29 @@
   align-self: flex-start;
 }
 
+/* OpenClaw version card */
+.openclaw-version-card .openclaw-version-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.openclaw-version-card .version-up-to-date {
+  color: var(--success-color);
+  font-size: 0.9rem;
+}
+
+.openclaw-version-card .version-unknown {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.openclaw-version-card .version-loading {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
 /* CDP (Browser Automation) card */
 .cdp-configured {
   display: flex;

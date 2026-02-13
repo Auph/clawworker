@@ -424,6 +424,117 @@ adminApi.post('/storage/sync', async (c) => {
   }
 });
 
+// GET /api/admin/openclaw/version - Current version, latest on npm, update available
+adminApi.get('/openclaw/version', async (c) => {
+  const sandbox = c.get('sandbox');
+
+  try {
+    // Get current version from container
+    const versionProc = await sandbox.startProcess('openclaw --version');
+    await waitForProcess(versionProc, 5000);
+    const versionLogs = await versionProc.getLogs();
+    const currentRaw = (versionLogs.stdout || versionLogs.stderr || '').trim();
+    const currentMatch = currentRaw.match(/[0-9]+\.[0-9]+\.[0-9]+/);
+    const current = currentMatch ? currentMatch[0] : currentRaw || 'unknown';
+
+    // Fetch latest from npm registry
+    let latest: string | null = null;
+    try {
+      const npmRes = await fetch('https://registry.npmjs.org/openclaw');
+      if (npmRes.ok) {
+        const npm = (await npmRes.json()) as { 'dist-tags'?: { latest?: string } };
+        latest = npm['dist-tags']?.latest ?? null;
+      }
+    } catch {
+      latest = null;
+    }
+
+    return c.json({
+      current,
+      latest,
+      updateAvailable: latest ? current !== latest : false,
+    });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    return c.json({ error: msg, current: null, latest: null }, 500);
+  }
+});
+
+// POST /api/admin/openclaw/update - Update to specified version and restart gateway
+adminApi.post('/openclaw/update', async (c) => {
+  const sandbox = c.get('sandbox');
+
+  let body: { version?: string };
+  try {
+    body = (await c.req.json()) as { version?: string };
+  } catch {
+    return c.json({ error: 'Invalid JSON body' }, 400);
+  }
+
+  const version = body.version?.trim();
+  if (!version) {
+    return c.json({ error: 'Missing "version" in body (e.g. "2026.2.12")' }, 400);
+  }
+
+  // Validate version format (semver-like)
+  if (!/^[0-9]+\.[0-9]+\.[0-9]+$/.test(version)) {
+    return c.json({ error: 'Version must be semver (e.g. 2026.2.12)' }, 400);
+  }
+
+  try {
+    await ensureMoltbotGateway(sandbox, c.env);
+
+    // Write version override file (synced to R2, persists across restarts)
+    const versionFile = '/root/.openclaw/clawworker-version-override';
+    await sandbox.writeFile(versionFile, version);
+
+    // Sync to R2 so version override persists across cold starts
+    const syncResult = await syncToR2(sandbox, c.env);
+
+    // Install new version
+    const installProc = await sandbox.startProcess(`npm install -g openclaw@${version}`, {
+      timeout: 120000,
+    });
+    await waitForProcess(installProc, 120000);
+    const installLogs = await installProc.getLogs();
+    if (installProc.exitCode !== 0) {
+      return c.json(
+        {
+          error: 'npm install failed',
+          stderr: installLogs.stderr?.slice(-1000),
+        },
+        500,
+      );
+    }
+
+    // Kill gateway so next request starts fresh with new version
+    const existingProcess = await findExistingMoltbotProcess(sandbox);
+    if (existingProcess) {
+      try {
+        await existingProcess.kill();
+      } catch {
+        // Ignore
+      }
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+
+    return c.json({
+      success: true,
+      message: `Updated to openclaw@${version}. Gateway will restart on next request.`,
+      syncPersisted: syncResult.success,
+      ...(syncResult.success
+        ? {}
+        : {
+            warning:
+              'Version override was not synced to R2. It will apply for this session but may not persist across cold starts.',
+          }),
+    });
+  } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Unknown error';
+    return c.json({ error: msg }, 500);
+  }
+});
+
 // POST /api/admin/gateway/restart - Kill the current gateway and start a new one
 adminApi.post('/gateway/restart', async (c) => {
   const sandbox = c.get('sandbox');

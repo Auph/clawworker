@@ -219,3 +219,28 @@ export async function triggerSync(): Promise<SyncResponse> {
     method: 'POST',
   });
 }
+
+export interface OpenClawVersionResponse {
+  current: string;
+  latest: string | null;
+  updateAvailable: boolean;
+  error?: string;
+}
+
+export async function getOpenClawVersion(): Promise<OpenClawVersionResponse> {
+  return apiRequest<OpenClawVersionResponse>('/openclaw/version');
+}
+
+export interface OpenClawUpdateResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+  stderr?: string;
+}
+
+export async function updateOpenClaw(version: string): Promise<OpenClawUpdateResponse> {
+  return apiRequest<OpenClawUpdateResponse>('/openclaw/update', {
+    method: 'POST',
+    body: JSON.stringify({ version }),
+  });
+}

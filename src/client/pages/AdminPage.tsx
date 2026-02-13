@@ -10,6 +10,8 @@ import {
   getDiagnostics,
   triggerSync,
   testR2Connection,
+  getOpenClawVersion,
+  updateOpenClaw,
   AuthError,
   type PendingDevice,
   type PairedDevice,
@@ -18,6 +20,7 @@ import {
   type IntegrationsResponse,
   type CdpStatusResponse,
   type DiagnosticsResponse,
+  type OpenClawVersionResponse,
 } from '../api';
 import './AdminPage.css';
 
@@ -78,6 +81,8 @@ export default function AdminPage() {
   } | null>(null);
   const [r2TestInProgress, setR2TestInProgress] = useState(false);
   const [diagnostics, setDiagnostics] = useState<DiagnosticsResponse | null>(null);
+  const [openclawVersion, setOpenclawVersion] = useState<OpenClawVersionResponse | null>(null);
+  const [openclawUpdateInProgress, setOpenclawUpdateInProgress] = useState(false);
   const [troubleshootExpanded, setTroubleshootExpanded] = useState(false);
   const [onboardingDismissed, setOnboardingDismissed] = useState(() => {
     try {
@@ -151,6 +156,15 @@ export default function AdminPage() {
     }
   }, []);
 
+  const fetchOpenClawVersion = useCallback(async () => {
+    try {
+      const data = await getOpenClawVersion();
+      setOpenclawVersion(data);
+    } catch {
+      setOpenclawVersion(null);
+    }
+  }, []);
+
   const fetchDiagnostics = useCallback(async () => {
     try {
       const data = await getDiagnostics();
@@ -166,7 +180,8 @@ export default function AdminPage() {
     fetchStorageStatus();
     fetchIntegrations();
     fetchCdpStatus();
-  }, [fetchDevices, fetchStorageStatus, fetchIntegrations, fetchCdpStatus]);
+    fetchOpenClawVersion();
+  }, [fetchDevices, fetchStorageStatus, fetchIntegrations, fetchCdpStatus, fetchOpenClawVersion]);
 
   const handleApprove = async (requestId: string) => {
     setActionInProgress(requestId);
@@ -200,6 +215,27 @@ export default function AdminPage() {
       setError(err instanceof Error ? err.message : 'Failed to approve devices');
     } finally {
       setActionInProgress(null);
+    }
+  };
+
+  const handleUpdateOpenClaw = async (version: string) => {
+    if (!confirm(`Update OpenClaw to ${version}? The gateway will restart and may take 1–2 minutes.`)) {
+      return;
+    }
+    setOpenclawUpdateInProgress(true);
+    try {
+      const result = await updateOpenClaw(version);
+      if (result.success) {
+        setError(null);
+        await fetchOpenClawVersion();
+        alert(result.message || 'Update complete. Refresh the page in a minute to use the new version.');
+      } else {
+        setError(result.error || result.stderr || 'Update failed');
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update OpenClaw');
+    } finally {
+      setOpenclawUpdateInProgress(false);
     }
   };
 
@@ -513,6 +549,7 @@ export default function AdminPage() {
               fetchStorageStatus();
               fetchIntegrations();
               fetchCdpStatus();
+              fetchOpenClawVersion();
             }}
           >
             Refresh
@@ -573,6 +610,39 @@ export default function AdminPage() {
               {restartInProgress && <ButtonSpinner />}
               {restartInProgress ? 'Restarting...' : 'Restart Gateway'}
             </button>
+          </div>
+
+          <div className="dashboard-card openclaw-version-card">
+            <h3>OpenClaw Version</h3>
+            <p className="hint">
+              Update to the latest OpenClaw release. Version override is saved to R2 and persists across restarts.
+            </p>
+            {openclawVersion ? (
+              <div className="openclaw-version-info">
+                <p>
+                  <strong>Current:</strong> <code>{openclawVersion.current}</code>
+                  {openclawVersion.latest && (
+                    <> · <strong>Latest:</strong> <code>{openclawVersion.latest}</code></>
+                  )}
+                </p>
+                {openclawVersion.updateAvailable && openclawVersion.latest ? (
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => handleUpdateOpenClaw(openclawVersion.latest!)}
+                    disabled={openclawUpdateInProgress}
+                  >
+                    {openclawUpdateInProgress && <ButtonSpinner />}
+                    {openclawUpdateInProgress ? 'Updating...' : `Update to ${openclawVersion.latest}`}
+                  </button>
+                ) : openclawVersion.latest ? (
+                  <span className="version-up-to-date">Up to date</span>
+                ) : (
+                  <span className="version-unknown">Could not fetch latest version</span>
+                )}
+              </div>
+            ) : (
+              <p className="version-loading">Loading version info...</p>
+            )}
           </div>
 
           <div className="dashboard-card cdp-card">
