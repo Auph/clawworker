@@ -34,7 +34,7 @@ export function StorageStep({ config, updateConfig, onNext, onBack }: StorageSte
           <a href="https://dash.cloudflare.com" target="_blank" rel="noopener noreferrer">
             Cloudflare Dashboard
           </a>
-          {" "}→ R2 → Manage R2 API Tokens → Object Read & Write on <code>clawworker-data</code> (created on first deploy)
+          {" "}→ R2 → Manage R2 API Tokens → Object Read & Write on <code>clawworker-data</code> (or your bucket if migrating from Moltworker)
         </p>
       </div>
 

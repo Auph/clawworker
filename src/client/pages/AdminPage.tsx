@@ -415,8 +415,7 @@ export default function AdminPage() {
                   <li>
                     <strong>Permission denied / access denied:</strong> Your R2 API token must have
                     Object Read & Write on the bucket. In Cloudflare Dashboard → R2 → Manage R2
-                    API Tokens, edit your token and add <code>clawworker-data</code> (or{' '}
-                    <code>moltbot-data</code> if migrating) with read+write access.
+                    API Tokens, edit your token and add <code>clawworker-data</code> (or your bucket name if migrating from Moltworker)
                   </li>
                   <li>
                     <strong>No config file found:</strong> The gateway may not have started yet.
@@ -424,7 +423,7 @@ export default function AdminPage() {
                   </li>
                   <li>
                     <strong>Migrated from old setup?</strong> If you previously used{' '}
-                    <code>moltbot-data</code>, set <code>R2_BUCKET_NAME=moltbot-data</code> via
+                    another bucket (e.g. <code>moltworker-data</code>), set <code>R2_BUCKET_NAME</code> to that bucket via
                     wrangler secret to keep using your existing bucket.
                   </li>
                   <li>
