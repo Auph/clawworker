@@ -10,7 +10,7 @@
     "setup:wizard:build": "cd setup && npm run build",
     "setup:wizard:deploy": "npm run setup:wizard:build && npx wrangler pages deploy setup/dist --project-name=clawworker-setup",
     "build": "vite build",
-    "deploy": "npm run build && wrangler deploy",
+    "deploy": "npm run build && node scripts/deploy-with-bucket.js",
     "dev": "vite dev",
     "start": "wrangler dev",
     "types": "wrangler types",

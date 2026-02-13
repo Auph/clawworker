@@ -55,8 +55,8 @@
       "tag": "v1"
     }
   ],
-  // R2 bucket binding (must match R2_BUCKET_NAME secret for migration users)
-  // If using moltworker-data, edit both bucket_name and preview_bucket_name below.
+  // R2 bucket binding. Override without editing: echo "moltworker-data" > .r2-bucket (gitignored)
+  // Or: R2_BUCKET_OVERRIDE=moltworker-data npm run deploy
   "r2_buckets": [
     {
       "binding": "R2_BUCKET",

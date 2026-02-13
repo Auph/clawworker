@@ -31,6 +31,9 @@ Thumbs.db
 .env.*
 !.env.example
 
+# R2 bucket override (use moltworker-data etc; avoids wrangler.jsonc revert on git pull)
+.r2-bucket
+
 # TypeScript
 *.tsbuildinfo
 
