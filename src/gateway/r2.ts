@@ -52,14 +52,17 @@ export async function ensureRcloneConfig(sandbox: Sandbox, env: MoltbotEnv): Pro
   return true;
 }
 
+const RCLONE_TEMP_CONFIG = '/tmp/rclone-fresh.conf';
+
 /**
  * Run rclone with a freshly written config to avoid any caching.
- * Used by Test R2 - writes to temp path so we're 100% sure we use current env.
+ * Used by Test R2 and Backup - guarantees we use current worker env (secrets).
  */
 export async function runRcloneWithFreshConfig(
   sandbox: Sandbox,
   env: MoltbotEnv,
   command: string,
+  options?: { timeout?: number },
 ): Promise<{ stdout: string; stderr: string; success: boolean; exitCode: number }> {
   const accessKey = env.R2_ACCESS_KEY_ID?.trim() ?? '';
   const secretKey = env.R2_SECRET_ACCESS_KEY?.trim() ?? '';
@@ -69,15 +72,14 @@ export async function runRcloneWithFreshConfig(
     return { stdout: '', stderr: 'R2 not configured', success: false, exitCode: 1 };
   }
 
-  const configPath = '/tmp/rclone-test-config.conf';
   const configContent = buildRcloneConfigContent(accessKey, secretKey, accountId);
-  await sandbox.writeFile(configPath, configContent);
+  await sandbox.writeFile(RCLONE_TEMP_CONFIG, configContent);
 
-  const result = await sandbox.exec(`rclone ${command} --config ${configPath} 2>&1 || true`, {
-    timeout: 15000,
+  const result = await sandbox.exec(`rclone ${command} --config ${RCLONE_TEMP_CONFIG} 2>&1 || true`, {
+    timeout: options?.timeout ?? 15000,
   });
 
-  await sandbox.exec(`rm -f ${configPath}`);
+  await sandbox.exec(`rm -f ${RCLONE_TEMP_CONFIG}`);
 
   return {
     stdout: result.stdout || '',

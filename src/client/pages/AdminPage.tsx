@@ -457,6 +457,13 @@ export default function AdminPage() {
               {syncError.details && (
                 <pre className="sync-error-details">{syncError.details}</pre>
               )}
+              {syncError.details &&
+                /AccessDenied|SignatureDoesNotMatch|403/i.test(syncError.details) && (
+                  <div className="r2-access-denied-fix" style={{ marginTop: '1rem' }}>
+                    <strong>R2 auth error detected.</strong> Run Test R2 above to verify credentials, then
+                    create a new R2 API token and update secrets. See &quot;Permission denied&quot; above.
+                  </div>
+                )}
               <div className="sync-error-fix">
                 <strong>How to fix:</strong>
                 <ul>

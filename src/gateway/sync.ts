@@ -1,7 +1,7 @@
 import type { Sandbox } from '@cloudflare/sandbox';
 import type { MoltbotEnv } from '../types';
 import { getR2BucketName } from '../config';
-import { ensureRcloneConfig } from './r2';
+import { runRcloneWithFreshConfig } from './r2';
 
 export interface SyncResult {
   success: boolean;
@@ -12,9 +12,18 @@ export interface SyncResult {
 
 const RCLONE_FLAGS = '--transfers=16 --fast-list --s3-no-check-bucket';
 const LAST_SYNC_FILE = '/tmp/.last-sync';
+const SYNC_TIMEOUT = 120000;
 
 function rcloneRemote(env: MoltbotEnv, prefix: string): string {
   return `r2:${getR2BucketName(env)}/${prefix}`;
+}
+
+function hasR2Config(env: MoltbotEnv): boolean {
+  return !!(
+    env.R2_ACCESS_KEY_ID?.trim() &&
+    env.R2_SECRET_ACCESS_KEY?.trim() &&
+    env.CF_ACCOUNT_ID?.trim()
+  );
 }
 
 /**
@@ -33,10 +42,10 @@ async function detectConfigDir(sandbox: Sandbox): Promise<string | null> {
 
 /**
  * Sync OpenClaw config and workspace from container to R2 for persistence.
- * Uses rclone for direct S3 API access (no FUSE mount overhead).
+ * Uses runRcloneWithFreshConfig so Backup uses same credential flow as Test R2 (no cache).
  */
 export async function syncToR2(sandbox: Sandbox, env: MoltbotEnv): Promise<SyncResult> {
-  if (!(await ensureRcloneConfig(sandbox, env))) {
+  if (!hasR2Config(env)) {
     return { success: false, error: 'R2 storage is not configured' };
   }
 
@@ -51,10 +60,12 @@ export async function syncToR2(sandbox: Sandbox, env: MoltbotEnv): Promise<SyncR
 
   const remote = (prefix: string) => rcloneRemote(env, prefix);
 
-  // Sync config (rclone sync propagates deletions)
-  const configResult = await sandbox.exec(
-    `rclone sync ${configDir}/ ${remote('openclaw/')} ${RCLONE_FLAGS} --exclude='*.lock' --exclude='*.log' --exclude='*.tmp' --exclude='.git/**'`,
-    { timeout: 120000 },
+  // Sync config - use fresh config (same as Test R2) to avoid stale credentials
+  const configResult = await runRcloneWithFreshConfig(
+    sandbox,
+    env,
+    `sync ${configDir}/ ${remote('openclaw/')} ${RCLONE_FLAGS} --exclude='*.lock' --exclude='*.log' --exclude='*.tmp' --exclude='.git/**'`,
+    { timeout: SYNC_TIMEOUT },
   );
   if (!configResult.success) {
     const errOut = [configResult.stderr, configResult.stdout]
@@ -68,17 +79,27 @@ export async function syncToR2(sandbox: Sandbox, env: MoltbotEnv): Promise<SyncR
     };
   }
 
-  // Sync workspace (non-fatal, rclone sync propagates deletions)
-  await sandbox.exec(
-    `test -d /root/clawd && rclone sync /root/clawd/ ${remote('workspace/')} ${RCLONE_FLAGS} --exclude='skills/**' --exclude='.git/**' || true`,
-    { timeout: 120000 },
-  );
+  // Sync workspace (non-fatal, skip if dir doesn't exist)
+  const hasWorkspace = await sandbox.exec('test -d /root/clawd && echo yes');
+  if (hasWorkspace.stdout?.trim() === 'yes') {
+    await runRcloneWithFreshConfig(
+      sandbox,
+      env,
+      `sync /root/clawd/ ${remote('workspace/')} ${RCLONE_FLAGS} --exclude='skills/**' --exclude='.git/**'`,
+      { timeout: SYNC_TIMEOUT },
+    );
+  }
 
   // Sync skills (non-fatal)
-  await sandbox.exec(
-    `test -d /root/clawd/skills && rclone sync /root/clawd/skills/ ${remote('skills/')} ${RCLONE_FLAGS} || true`,
-    { timeout: 120000 },
-  );
+  const hasSkills = await sandbox.exec('test -d /root/clawd/skills && echo yes');
+  if (hasSkills.stdout?.trim() === 'yes') {
+    await runRcloneWithFreshConfig(
+      sandbox,
+      env,
+      `sync /root/clawd/skills/ ${remote('skills/')} ${RCLONE_FLAGS}`,
+      { timeout: SYNC_TIMEOUT },
+    );
+  }
 
   // Write timestamp
   await sandbox.exec(`date -Iseconds > ${LAST_SYNC_FILE}`);

@@ -28,10 +28,7 @@ describe('syncToR2', () => {
   describe('config detection', () => {
     it('returns error when no config file found', async () => {
       const { sandbox, execMock } = createMockSandbox();
-      execMock
-        .mockResolvedValueOnce(createMockExecResult()) // mkdir
-        .mockResolvedValueOnce(createMockExecResult()) // rm -f
-        .mockResolvedValueOnce(createMockExecResult('none')); // no config dir
+      execMock.mockResolvedValueOnce(createMockExecResult('none')); // no config dir
 
       const env = createMockEnvWithR2();
       const result = await syncToR2(sandbox, env);
@@ -46,14 +43,17 @@ describe('syncToR2', () => {
       const timestamp = '2026-01-27T12:00:00+00:00';
       const { sandbox, execMock } = createMockSandbox();
       execMock
-        .mockResolvedValueOnce(createMockExecResult()) // mkdir (ensureRcloneConfig)
-        .mockResolvedValueOnce(createMockExecResult()) // rm -f (ensureRcloneConfig)
         .mockResolvedValueOnce(createMockExecResult('openclaw')) // config detect
         .mockResolvedValueOnce(createMockExecResult()) // rclone sync config
+        .mockResolvedValueOnce(createMockExecResult()) // rm
+        .mockResolvedValueOnce(createMockExecResult('yes')) // hasWorkspace
         .mockResolvedValueOnce(createMockExecResult()) // rclone sync workspace
+        .mockResolvedValueOnce(createMockExecResult()) // rm
+        .mockResolvedValueOnce(createMockExecResult('yes')) // hasSkills
         .mockResolvedValueOnce(createMockExecResult()) // rclone sync skills
-        .mockResolvedValueOnce(createMockExecResult()) // date > last-sync
-        .mockResolvedValueOnce(createMockExecResult(timestamp)); // cat last-sync
+        .mockResolvedValueOnce(createMockExecResult()) // rm
+        .mockResolvedValueOnce(createMockExecResult()) // date
+        .mockResolvedValueOnce(createMockExecResult(timestamp)); // cat
 
       const env = createMockEnvWithR2();
       const result = await syncToR2(sandbox, env);
@@ -66,14 +66,17 @@ describe('syncToR2', () => {
       const timestamp = '2026-01-27T12:00:00+00:00';
       const { sandbox, execMock } = createMockSandbox();
       execMock
-        .mockResolvedValueOnce(createMockExecResult()) // mkdir
-        .mockResolvedValueOnce(createMockExecResult()) // rm -f
-        .mockResolvedValueOnce(createMockExecResult('clawdbot')) // legacy config
+        .mockResolvedValueOnce(createMockExecResult('clawdbot')) // config detect
         .mockResolvedValueOnce(createMockExecResult()) // rclone sync config
+        .mockResolvedValueOnce(createMockExecResult()) // rm
+        .mockResolvedValueOnce(createMockExecResult('yes')) // hasWorkspace
         .mockResolvedValueOnce(createMockExecResult()) // rclone sync workspace
+        .mockResolvedValueOnce(createMockExecResult()) // rm
+        .mockResolvedValueOnce(createMockExecResult('yes')) // hasSkills
         .mockResolvedValueOnce(createMockExecResult()) // rclone sync skills
-        .mockResolvedValueOnce(createMockExecResult()) // date > last-sync
-        .mockResolvedValueOnce(createMockExecResult(timestamp)); // cat last-sync
+        .mockResolvedValueOnce(createMockExecResult()) // rm
+        .mockResolvedValueOnce(createMockExecResult()) // date
+        .mockResolvedValueOnce(createMockExecResult(timestamp)); // cat
 
       const env = createMockEnvWithR2();
       const result = await syncToR2(sandbox, env);
@@ -81,19 +84,17 @@ describe('syncToR2', () => {
       expect(result.success).toBe(true);
 
       // Config sync command should reference .clawdbot
-      const configSyncCall = execMock.mock.calls[3][0];
+      const configSyncCall = execMock.mock.calls[1][0];
       expect(configSyncCall).toContain('/root/.clawdbot/');
     });
 
     it('returns error when config sync fails', async () => {
       const { sandbox, execMock } = createMockSandbox();
       execMock
-        .mockResolvedValueOnce(createMockExecResult()) // mkdir
-        .mockResolvedValueOnce(createMockExecResult()) // rm -f
         .mockResolvedValueOnce(createMockExecResult('openclaw')) // config detect
         .mockResolvedValueOnce(
           createMockExecResult('', { exitCode: 1, success: false, stderr: 'rclone error' }),
-        );
+        ); // rclone sync config fails
 
       const env = createMockEnvWithR2();
       const result = await syncToR2(sandbox, env);
@@ -105,10 +106,13 @@ describe('syncToR2', () => {
     it('uses rclone sync (not copy) to propagate deletions', async () => {
       const { sandbox, execMock } = createMockSandbox();
       execMock
-        .mockResolvedValueOnce(createMockExecResult()) // mkdir
-        .mockResolvedValueOnce(createMockExecResult()) // rm -f
         .mockResolvedValueOnce(createMockExecResult('openclaw'))
         .mockResolvedValueOnce(createMockExecResult())
+        .mockResolvedValueOnce(createMockExecResult())
+        .mockResolvedValueOnce(createMockExecResult('yes'))
+        .mockResolvedValueOnce(createMockExecResult())
+        .mockResolvedValueOnce(createMockExecResult())
+        .mockResolvedValueOnce(createMockExecResult('yes'))
         .mockResolvedValueOnce(createMockExecResult())
         .mockResolvedValueOnce(createMockExecResult())
         .mockResolvedValueOnce(createMockExecResult())
@@ -117,17 +121,20 @@ describe('syncToR2', () => {
       const env = createMockEnvWithR2();
       await syncToR2(sandbox, env);
 
-      const configCmd = execMock.mock.calls[3][0];
+      const configCmd = execMock.mock.calls[1][0];
       expect(configCmd).toMatch(/^rclone sync /);
     });
 
     it('rclone commands include --transfers=16 and exclude .git', async () => {
       const { sandbox, execMock } = createMockSandbox();
       execMock
-        .mockResolvedValueOnce(createMockExecResult()) // mkdir
-        .mockResolvedValueOnce(createMockExecResult()) // rm -f
         .mockResolvedValueOnce(createMockExecResult('openclaw'))
         .mockResolvedValueOnce(createMockExecResult())
+        .mockResolvedValueOnce(createMockExecResult())
+        .mockResolvedValueOnce(createMockExecResult('yes'))
+        .mockResolvedValueOnce(createMockExecResult())
+        .mockResolvedValueOnce(createMockExecResult())
+        .mockResolvedValueOnce(createMockExecResult('yes'))
         .mockResolvedValueOnce(createMockExecResult())
         .mockResolvedValueOnce(createMockExecResult())
         .mockResolvedValueOnce(createMockExecResult())
@@ -136,7 +143,7 @@ describe('syncToR2', () => {
       const env = createMockEnvWithR2();
       await syncToR2(sandbox, env);
 
-      const configCmd = execMock.mock.calls[3][0];
+      const configCmd = execMock.mock.calls[1][0];
       expect(configCmd).toContain('--transfers=16');
       expect(configCmd).toContain("--exclude='.git/**'");
       expect(configCmd).toContain('/root/.openclaw/');
@@ -146,10 +153,13 @@ describe('syncToR2', () => {
     it('uses custom bucket name', async () => {
       const { sandbox, execMock } = createMockSandbox();
       execMock
-        .mockResolvedValueOnce(createMockExecResult()) // mkdir
-        .mockResolvedValueOnce(createMockExecResult()) // rm -f
         .mockResolvedValueOnce(createMockExecResult('openclaw'))
         .mockResolvedValueOnce(createMockExecResult())
+        .mockResolvedValueOnce(createMockExecResult())
+        .mockResolvedValueOnce(createMockExecResult('yes'))
+        .mockResolvedValueOnce(createMockExecResult())
+        .mockResolvedValueOnce(createMockExecResult())
+        .mockResolvedValueOnce(createMockExecResult('yes'))
         .mockResolvedValueOnce(createMockExecResult())
         .mockResolvedValueOnce(createMockExecResult())
         .mockResolvedValueOnce(createMockExecResult())
@@ -158,7 +168,7 @@ describe('syncToR2', () => {
       const env = createMockEnvWithR2({ R2_BUCKET_NAME: 'my-custom-bucket' });
       await syncToR2(sandbox, env);
 
-      const configCmd = execMock.mock.calls[3][0];
+      const configCmd = execMock.mock.calls[1][0];
       expect(configCmd).toContain('r2:my-custom-bucket/openclaw/');
     });
   });
