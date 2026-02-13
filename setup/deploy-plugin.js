@@ -6,9 +6,11 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import fs from "node:fs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
+const WRANGLER_CONFIG = path.join(PROJECT_ROOT, "wrangler.jsonc");
 
 function runCommand(cmd, args, options = {}) {
   return new Promise((resolve, reject) => {
@@ -116,10 +118,31 @@ export function deployPlugin() {
           ? `${config.botName.trim()}-clawworker`
           : "clawworker";
 
+        // R2 binding: wrangler.jsonc has bucket_name hardcoded. For custom buckets (e.g. moltworker-data),
+        // generate temp config so the binding matches R2_BUCKET_NAME.
+        let deployConfigPath = WRANGLER_CONFIG;
+        if (r2Bucket !== "clawworker-data") {
+          const raw = fs.readFileSync(WRANGLER_CONFIG, "utf8");
+          const patched = raw.replace(
+            /"bucket_name":\s*"clawworker-data"/g,
+            `"bucket_name": "${r2Bucket.replace(/"/g, '\\"')}"`
+          ).replace(
+            /"preview_bucket_name":\s*"clawworker-data"/g,
+            `"preview_bucket_name": "${r2Bucket.replace(/"/g, '\\"')}"`
+          );
+          deployConfigPath = path.join(PROJECT_ROOT, `.wrangler-deploy-${r2Bucket}.jsonc`);
+          fs.writeFileSync(deployConfigPath, patched);
+          console.log("[deploy] Using R2 bucket", r2Bucket, "for binding");
+        }
+
         try {
           console.log("[deploy] Deploying to Cloudflare as", workerName, "...");
-          await runCommand("npx", ["wrangler", "deploy", "--name", workerName], { cwd: PROJECT_ROOT });
+          const deployArgs = ["wrangler", "deploy", "--name", workerName, "--config", deployConfigPath];
+          await runCommand("npx", deployArgs, { cwd: PROJECT_ROOT });
         } catch (e) {
+          if (deployConfigPath !== WRANGLER_CONFIG) {
+            try { fs.unlinkSync(deployConfigPath); } catch (_) {}
+          }
           res.statusCode = 500;
           res.end(
             JSON.stringify({
@@ -129,6 +152,10 @@ export function deployPlugin() {
             })
           );
           return;
+        }
+
+        if (deployConfigPath !== WRANGLER_CONFIG) {
+          try { fs.unlinkSync(deployConfigPath); } catch (_) {}
         }
 
         for (const { key, value } of secrets) {

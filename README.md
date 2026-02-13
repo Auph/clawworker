@@ -10,7 +10,7 @@
 
 If you have an existing deployment with `MOLTBOT_GATEWAY_TOKEN` or the `moltbot-data` bucket:
 - **Gateway token:** Both `GATEWAY_TOKEN` (new) and `MOLTBOT_GATEWAY_TOKEN` (legacy) work. To migrate: `npx wrangler secret put GATEWAY_TOKEN` (paste your token), then optionally delete the old secret.
-- **R2 bucket:** New installs use `clawworker-data`. If you have data in `moltbot-data` or `moltworker-data` (from Moltworker), set `R2_BUCKET_NAME` to that bucket name via wrangler secret.
+- **R2 bucket:** New installs use `clawworker-data`. If you have data in `moltbot-data` or `moltworker-data` (from Moltworker): (1) set `R2_BUCKET_NAME` secret; (2) edit `wrangler.jsonc` and change `bucket_name` and `preview_bucket_name` in the `r2_buckets` section to match.
 
 ## Requirements
 

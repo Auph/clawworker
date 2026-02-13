@@ -55,7 +55,8 @@
       "tag": "v1"
     }
   ],
-  // R2 bucket for persistent storage (config, conversations, workspace)
+  // R2 bucket binding (must match R2_BUCKET_NAME secret for migration users)
+  // If using moltworker-data, edit both bucket_name and preview_bucket_name below.
   "r2_buckets": [
     {
       "binding": "R2_BUCKET",
