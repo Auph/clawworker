@@ -1,0 +1,104 @@
+.deploy-step h2 {
+  font-family: var(--font-display);
+  margin-bottom: 0.5rem;
+}
+
+.deploy-cta {
+  text-align: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.08) 0%, rgba(99, 102, 241, 0.05) 100%);
+  border: 1px solid var(--border-glow);
+  border-radius: var(--radius);
+  margin-bottom: 2rem;
+}
+
+.deploy-btn {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-family: var(--font-display);
+  letter-spacing: 0.05em;
+}
+
+.deploy-hint {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.deploy-success {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(52, 211, 153, 0.12);
+  border: 1px solid var(--success);
+  border-radius: var(--radius-sm);
+  color: var(--success);
+}
+
+.deploy-error {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: rgba(248, 81, 73, 0.15);
+  border: 1px solid var(--error);
+  border-radius: var(--radius-sm);
+  color: var(--error);
+}
+
+.secrets-panel {
+  margin-bottom: 2rem;
+}
+
+.secrets-panel h3,
+.post-deploy h3 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.secrets-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.copyable-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.copyable-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.copyable-value {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.copyable-value code {
+  font-size: 0.85rem;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.post-deploy ul {
+  list-style: none;
+  margin: 0.75rem 0;
+}
+
+.post-deploy li {
+  padding: 0.5rem 0;
+  font-size: 0.9rem;
+  word-break: break-all;
+}
+
+.post-deploy code {
+  font-size: 0.8rem;
+  background: var(--surface-elevated);
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+}

@@ -1,0 +1,8 @@
+# Cloudflare Pages config for the setup wizard
+# When connecting this repo to Pages, set:
+#   Root directory: setup
+#   Build command: npm run build
+#   Build output directory: dist
+
+name = "clawworker-setup"
+pages_build_output_dir = "dist"

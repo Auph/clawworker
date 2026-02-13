@@ -1,0 +1,61 @@
+{
+  "name": "clawworker",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "ClawWorker - OpenClaw personal AI assistant on Cloudflare Sandbox",
+  "scripts": {
+    "setup": "bash scripts/setup.sh",
+    "setup:wizard": "cd setup && npm run dev",
+    "setup:wizard:build": "cd setup && npm run build",
+    "setup:wizard:deploy": "npm run setup:wizard:build && npx wrangler pages deploy setup/dist --project-name=clawworker-setup",
+    "build": "vite build",
+    "deploy": "npm run build && wrangler deploy",
+    "dev": "vite dev",
+    "start": "wrangler dev",
+    "types": "wrangler types",
+    "typecheck": "tsc --noEmit",
+    "lint": "oxlint src/",
+    "lint:fix": "oxlint --fix src/",
+    "format": "oxfmt --write src/",
+    "format:check": "oxfmt --check src/",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@cloudflare/puppeteer": "^1.0.5",
+    "hono": "^4.11.6",
+    "jose": "^6.0.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/sandbox": "*",
+    "@cloudflare/vite-plugin": "^1.0.0",
+    "@cloudflare/workers-types": "^4.20250109.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "@vitest/coverage-v8": "^4.0.18",
+    "oxfmt": "^0.28.0",
+    "oxlint": "^1.43.0",
+    "typescript": "^5.9.3",
+    "vite": "^6.0.0",
+    "vitest": "^4.0.18",
+    "wrangler": "^4.50.0"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "cloudflare": {
+    "bindings": {
+      "ANTHROPIC_API_KEY": {
+        "description": "Your Anthropic API key for Claude. Get from console.anthropic.com. Required for AI."
+      },
+      "GATEWAY_TOKEN": {
+        "description": "Gateway token - pass via ?token= to access Control UI. Generate with: openssl rand -hex 32"
+      }
+    }
+  }
+}
