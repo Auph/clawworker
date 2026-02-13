@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import type { SetupConfig } from "./types";
 import { defaultConfig } from "./types";
 import { WelcomeStep } from "./steps/WelcomeStep";
+import { NameStep } from "./steps/NameStep";
 import { AIProviderStep } from "./steps/AIProviderStep";
 import { GatewayTokenStep } from "./steps/GatewayTokenStep";
 import { StorageStep } from "./steps/StorageStep";
@@ -11,6 +12,7 @@ import "./App.css";
 
 const STEPS = [
   { id: "welcome", title: "Welcome" },
+  { id: "name", title: "Name" },
   { id: "ai", title: "AI Provider" },
   { id: "token", title: "Gateway Token" },
   { id: "storage", title: "R2 Storage" },
@@ -72,6 +74,14 @@ export default function App() {
         <div className="card">
           {currentStepId === "welcome" && (
             <WelcomeStep onNext={next} />
+          )}
+          {currentStepId === "name" && (
+            <NameStep
+              config={config}
+              updateConfig={updateConfig}
+              onNext={next}
+              onBack={prev}
+            />
           )}
           {currentStepId === "ai" && (
             <AIProviderStep

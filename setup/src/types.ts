@@ -1,4 +1,5 @@
 export interface SetupConfig {
+  botName: string;
   aiProvider: "anthropic" | "ai-gateway";
   anthropicApiKey: string;
   aiGatewayApiKey: string;
@@ -11,6 +12,7 @@ export interface SetupConfig {
 }
 
 export const defaultConfig: SetupConfig = {
+  botName: "",
   aiProvider: "anthropic",
   anthropicApiKey: "",
   aiGatewayApiKey: "",

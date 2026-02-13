@@ -108,9 +108,13 @@ export function deployPlugin() {
           return;
         }
 
+        const workerName = config.botName?.trim()
+          ? `${config.botName.trim()}-clawworker`
+          : "clawworker";
+
         try {
-          console.log("[deploy] Deploying to Cloudflare...");
-          await runCommand("npx", ["wrangler", "deploy"], { cwd: PROJECT_ROOT });
+          console.log("[deploy] Deploying to Cloudflare as", workerName, "...");
+          await runCommand("npx", ["wrangler", "deploy", "--name", workerName], { cwd: PROJECT_ROOT });
         } catch (e) {
           res.statusCode = 500;
           res.end(

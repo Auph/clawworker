@@ -23,6 +23,12 @@ export function ReviewStep({ config, onNext, onBack }: ReviewStepProps) {
 
       <div className="review-grid">
         <div className="review-item">
+          <span className="review-label">Worker name</span>
+          <span>
+            {config.botName?.trim() ? `${config.botName.trim()}-clawworker` : "clawworker"}
+          </span>
+        </div>
+        <div className="review-item">
           <span className="review-label">AI Provider</span>
           <span>
             {config.aiProvider === "anthropic" ? "Anthropic (direct)" : "Cloudflare AI Gateway"}

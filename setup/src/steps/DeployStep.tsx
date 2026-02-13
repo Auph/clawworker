@@ -155,7 +155,11 @@ export function DeployStep({ config, onBack }: DeployStepProps) {
       <div className="post-deploy">
         <h3>After deployment</h3>
         <p>
-          Replace <code>YOUR-WORKER</code> with your worker URL from the deploy output:
+          Replace <code>YOUR-WORKER</code> with your worker name (
+          <code>
+            {config.botName?.trim() ? `${config.botName.trim()}-clawworker` : "clawworker"}
+          </code>
+          ) or the URL shown in the deploy output:
         </p>
         <ul>
           <li>

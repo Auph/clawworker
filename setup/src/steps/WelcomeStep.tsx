@@ -35,6 +35,7 @@ export function WelcomeStep({ onNext }: WelcomeStepProps) {
       <div className="whats-next">
         <span className="whats-next-label">What happens next</span>
         <ol>
+          <li>Name your bot (e.g. <code>my-assistant</code> → <code>my-assistant-clawworker</code>)</li>
           <li>Choose AI provider and enter credentials</li>
           <li>Generate a secure gateway token</li>
           <li>Connect R2 for persistence</li>
