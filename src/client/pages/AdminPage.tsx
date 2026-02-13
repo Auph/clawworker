@@ -395,6 +395,37 @@ export default function AdminPage() {
                 <pre className="r2-test-output">{r2TestResult.output}</pre>
               )}
               {r2TestResult.error && <p>{r2TestResult.error}</p>}
+              {!r2TestResult.ok &&
+                r2TestResult.output &&
+                /AccessDenied|Access Denied|403/i.test(r2TestResult.output) && (
+                  <div className="r2-access-denied-fix">
+                    <strong>Access Denied — token lacks permission</strong>
+                    <ol>
+                      <li>
+                        Dashboard → <strong>R2</strong> → <strong>Manage R2 API Tokens</strong>
+                      </li>
+                      <li>
+                        <strong>Create a new token</strong> (existing tokens can&apos;t be edited)
+                      </li>
+                      <li>
+                        Permissions: <strong>Object Read &amp; Write</strong>, apply to bucket{' '}
+                        <code>{r2TestResult.bucket}</code>
+                      </li>
+                      <li>
+                        Copy the new Access Key ID and Secret, then:{' '}
+                        <code>npx wrangler secret put R2_ACCESS_KEY_ID</code> and{' '}
+                        <code>npx wrangler secret put R2_SECRET_ACCESS_KEY</code>
+                      </li>
+                      <li>
+                        Restart Gateway or redeploy so the container picks up the new credentials
+                      </li>
+                    </ol>
+                    <p className="form-hint">
+                      Use an <strong>R2 API token</strong> (from R2 → Manage R2 API Tokens), not a
+                      general Cloudflare API token. Token and bucket must be in the same account as your worker.
+                    </p>
+                  </div>
+                )}
             </div>
           )}
           {syncError && (
