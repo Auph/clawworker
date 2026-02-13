@@ -112,7 +112,11 @@ export default function App() {
 
       <footer className="footer">
         <p>
-          Based on{' '}
+          Made open source under{' '}
+          <a href="https://www.apache.org/licenses/LICENSE-2.0" target="_blank" rel="noopener noreferrer">
+            Apache-2.0
+          </a>
+          . Based on{' '}
           <a href="https://github.com/cloudflare/moltworker" target="_blank" rel="noopener noreferrer">
             Cloudflare Moltworker
           </a>
