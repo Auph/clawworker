@@ -507,6 +507,19 @@ adminApi.post('/openclaw/update', async (c) => {
       );
     }
 
+    // Fix config schema for new version (prevents ProcessExitedBeforeReadyError on restart)
+    try {
+      const doctorProc = await sandbox.startProcess('openclaw doctor --fix', {
+        timeout: 15000,
+      });
+      await waitForProcess(doctorProc, 15000);
+      if (doctorProc.exitCode === 0) {
+        await syncToR2(sandbox, c.env);
+      }
+    } catch {
+      // Non-fatal: startup script will run doctor again
+    }
+
     // Kill gateway so next request starts fresh with new version
     const existingProcess = await findExistingMoltbotProcess(sandbox);
     if (existingProcess) {

@@ -362,6 +362,15 @@ if r2_configured; then
 fi
 
 # ============================================================
+# CONFIG VALIDATION (fix schema issues after version upgrades)
+# ============================================================
+if openclaw doctor --fix 2>/dev/null; then
+    echo "Config validated/fixed by openclaw doctor"
+else
+    echo "openclaw doctor skipped or failed (non-fatal)"
+fi
+
+# ============================================================
 # START GATEWAY
 # ============================================================
 mkdir -p "$WORKSPACE_DIR"
