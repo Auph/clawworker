@@ -362,17 +362,17 @@ adminApi.get('/storage/test', async (c) => {
   const accessKey = c.env.R2_ACCESS_KEY_ID?.trim() ?? '';
   const accountId = c.env.CF_ACCOUNT_ID?.trim() ?? '';
 
-  // Use ls instead of lsd - lsd lists only "directories" (prefixes) and can fail with
-  // "directory not found" on empty buckets or intermittent API responses. ls is more robust.
+  // Use "size" to test connectivity without listing prefixes; "ls" with --max-depth can
+  // trigger "directory not found" from rclone on some R2/s3 responses. size works on empty buckets.
   // Retry once on failure to handle transient network/container glitches.
   let result = await runRcloneWithFreshConfig(
     sandbox,
     c.env,
-    `ls r2:${bucket} --max-depth 1`,
+    `size r2:${bucket}/`,
   );
   if (!result.success) {
     await new Promise((r) => setTimeout(r, 1500));
-    result = await runRcloneWithFreshConfig(sandbox, c.env, `ls r2:${bucket} --max-depth 1`);
+    result = await runRcloneWithFreshConfig(sandbox, c.env, `size r2:${bucket}/`);
   }
 
   const output = [result.stdout, result.stderr].filter(Boolean).join('\n');

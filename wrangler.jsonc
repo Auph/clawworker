@@ -55,8 +55,9 @@
       "tag": "v1"
     }
   ],
-  // R2 bucket binding. Override without editing: echo "moltworker-data" > .r2-bucket (gitignored)
-  // Or: R2_BUCKET_OVERRIDE=moltworker-data npm run deploy
+  // R2 bucket binding. This file always says clawworker-data; the *binding* is only overridden
+  // when you deploy via: npm run deploy (which reads .r2-bucket or R2_BUCKET_OVERRIDE).
+  // Deploying with "npx wrangler deploy" or CI that doesn't run the deploy script will keep this binding.
   "r2_buckets": [
     {
       "binding": "R2_BUCKET",

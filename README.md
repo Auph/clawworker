@@ -88,10 +88,12 @@ Requires `CLOUDFLARE_API_TOKEN` in your environment.
 1. Go to [Workers & Pages](https://dash.cloudflare.com/) → Create → Pages → Connect to Git
 2. Select this repo
 3. Configure:
-   - **Root directory:** `setup`
+   - **Root directory:** `setup` (required — if left blank, the site will be blank)
    - **Build command:** `npm run build`
    - **Build output directory:** `dist`
 4. Deploy
+
+If https://clawworker.pages.dev (or your Pages URL) is **blank**, the project is likely building from the repo root instead of the setup app. In your Pages project → Settings → Builds & deployments → Build configuration, set **Root directory** to `setup`, save, and redeploy.
 
 ### One-step setup (CLI)
 
@@ -510,6 +512,8 @@ OpenClaw in Cloudflare Sandbox uses multiple authentication layers:
 
 ## Troubleshooting
 
+**Setup wizard at clawworker.pages.dev (or your Pages URL) is blank:** The Pages project is building from the repo root instead of the setup app. In the dashboard: Pages → your project → Settings → Builds & deployments → set **Root directory** to `setup`, then redeploy.
+
 **After deployment, the page doesn't load / container doesn't spin up:** (1) **Wait 2–3 minutes** after the first deploy—Cloudflare must provision the container before it can start. Then refresh. (2) If you see a "Configuration Required" page, set the missing secrets (see table above) with `wrangler secret put <NAME>`. (3) If you only see the Cloudflare Access sign-in, complete login; the worker runs after Access. (4) To see live errors: run `npx wrangler tail` in a terminal, then open the app URL and watch the logs.
 
 **`npm run dev` fails with an `Unauthorized` error:** You need to enable Cloudflare Containers in the [Containers dashboard](https://dash.cloudflare.com/?to=/:account/workers/containers)
@@ -527,6 +531,8 @@ OpenClaw in Cloudflare Sandbox uses multiple authentication layers:
 **R2 "directory not found" / intermittent failures:** Can occur when the container's network path to R2 is flaky (sleep/wake, region routing). Test R2 and background sync now retry on failure. If it persists, refresh the page to wake the container, or redeploy.
 
 **"No backup found in R2" / Gateway startup failed:** Verify `R2_BUCKET_NAME` matches where your data lives. If your backup is in `clawworker-data` but the secret is `moltworker-data`, change it: `npx wrangler secret put R2_BUCKET_NAME` and enter the correct bucket. Ensure `openclaw/openclaw.json` exists in that bucket for config restore. Redeploy after changing secrets.
+
+**Agent starts from scratch / memory not restored after restart:** The container restores config and workspace from R2 at startup. If the agent has no memory of past conversations, (1) ensure **Test R2** in Admin → Storage shows **succeeded** (the test now reports real failures; if you previously saw "directory not found" in the output but "succeeded", that was a bug—redeploy and re-test). (2) Ensure `R2_BUCKET_NAME` is the same bucket where **Backup Now** writes (Admin shows "Last backup"). (3) After a backup, wait for "Backup Now" to complete; then on next container start the script will restore `workspace/` (including memory) from that bucket.
 
 **Access denied on admin routes:** Ensure `CF_ACCESS_TEAM_DOMAIN` and `CF_ACCESS_AUD` are set, and that your Cloudflare Access application is configured correctly.
 

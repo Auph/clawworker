@@ -75,7 +75,8 @@ export async function runRcloneWithFreshConfig(
   const configContent = buildRcloneConfigContent(accessKey, secretKey, accountId);
   await sandbox.writeFile(RCLONE_TEMP_CONFIG, configContent);
 
-  const result = await sandbox.exec(`rclone ${command} --config ${RCLONE_TEMP_CONFIG} 2>&1 || true`, {
+  // Do not use "|| true" - we need the real rclone exit code so Test R2 and Backup report failure correctly
+  const result = await sandbox.exec(`rclone ${command} --config ${RCLONE_TEMP_CONFIG}`, {
     timeout: options?.timeout ?? 15000,
   });
 
