@@ -269,6 +269,13 @@
             } else if (pollCount >= stuckHintAfterPolls) {
               infoEl.textContent = 'Still starting… cold start can take 3–5 min (R2 restore + gateway).';
             }
+          } else if (data.status === 'error') {
+            statusEl.textContent = data.error || 'Container error';
+            infoEl.textContent = 'If you just deployed, wait 2–3 minutes for the container to provision, then refresh.';
+            infoEl.style.display = 'block';
+            if (pollCount >= retryBtnAfterPolls) {
+              stuckHint.style.display = 'block';
+            }
           } else {
             statusEl.textContent = 'Checking... (' + pollCount + ')';
             setProgress(1);

@@ -510,6 +510,8 @@ OpenClaw in Cloudflare Sandbox uses multiple authentication layers:
 
 ## Troubleshooting
 
+**After deployment, the page doesn't load / container doesn't spin up:** (1) **Wait 2–3 minutes** after the first deploy—Cloudflare must provision the container before it can start. Then refresh. (2) If you see a "Configuration Required" page, set the missing secrets (see table above) with `wrangler secret put <NAME>`. (3) If you only see the Cloudflare Access sign-in, complete login; the worker runs after Access. (4) To see live errors: run `npx wrangler tail` in a terminal, then open the app URL and watch the logs.
+
 **`npm run dev` fails with an `Unauthorized` error:** You need to enable Cloudflare Containers in the [Containers dashboard](https://dash.cloudflare.com/?to=/:account/workers/containers)
 
 **Gateway fails to start:** Check `npx wrangler secret list` and `npx wrangler tail`
