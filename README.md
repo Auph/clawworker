@@ -25,7 +25,7 @@ The following Cloudflare features used by this project have free tiers:
 
 ## Container Cost Estimate
 
-This project uses a `standard-1` Cloudflare Container instance (1/2 vCPU, 4 GiB memory, 8 GB disk). Below are approximate monthly costs assuming the container runs 24/7, based on [Cloudflare Containers pricing](https://developers.cloudflare.com/containers/pricing/):
+This project uses a `basic` Cloudflare Container instance. Below are approximate monthly costs for a larger tier (e.g. `standard-1`) when the container runs 24/7, based on [Cloudflare Containers pricing](https://developers.cloudflare.com/containers/pricing/); the `basic` tier has lower specs and cost.
 
 | Resource | Provisioned | Monthly Usage | Included Free | Overage | Approx. Cost |
 |----------|-------------|---------------|---------------|---------|--------------|
@@ -40,7 +40,7 @@ Notes:
 - Memory and disk are billed on **provisioned capacity** for the full time the container is running.
 - To reduce costs, configure `SANDBOX_SLEEP_AFTER` (e.g., `10m`) so the container sleeps when idle. A container that only runs 4 hours/day would cost roughly ~$5-6/mo in compute on top of the $5 plan fee.
 - Network egress, Workers/Durable Objects requests, and logs are additional but typically minimal for personal use.
-- See the [instance types table](https://developers.cloudflare.com/containers/pricing/) for other options (e.g., `lite` at 256 MiB/$0.50/mo memory or `standard-4` at 12 GiB for heavier workloads).
+- See the [instance types table](https://developers.cloudflare.com/containers/pricing/) for specs and costs of `basic` and other options (e.g., `lite`, `standard-1`, `standard-4`).
 
 ## What is OpenClaw?
 
